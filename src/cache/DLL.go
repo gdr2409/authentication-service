@@ -3,7 +3,8 @@ package cache
 import "fmt"
 
 type DLLNode struct {
-	value int
+	key   uint
+	value string
 	next  *DLLNode
 	prev  *DLLNode
 }
@@ -14,8 +15,9 @@ type Queue struct {
 	size  int
 }
 
-func (Q *Queue) add(val int) *DLLNode {
+func (Q *Queue) add(id uint, val string) *DLLNode {
 	temp := &DLLNode{
+		key:   id,
 		value: val,
 		next:  nil,
 		prev:  nil,
@@ -34,12 +36,13 @@ func (Q *Queue) add(val int) *DLLNode {
 	return temp
 }
 
-func (Q *Queue) remove() int {
+func (Q *Queue) remove() (uint, string) {
 	if Q.rear == nil {
-		return -1
+		return 0, ""
 	}
 
 	value := Q.rear.value
+	key := Q.rear.key
 
 	if Q.rear == Q.front {
 		Q.front = nil
@@ -51,34 +54,35 @@ func (Q *Queue) remove() int {
 	}
 
 	Q.size--
-	fmt.Printf("Inside remove, Size: %v\n", Q.size)
-	return value
+	// fmt.Printf("Inside remove, Size: %v\n", Q.size)
+	return key, value
 }
 
-func (Q *Queue) removeNode(node *DLLNode) int {
+func (Q *Queue) removeNode(node *DLLNode) (uint, string) {
 	if node == nil {
-		return -1
-	}
-
-	if node == Q.front {
-		node.next.prev = node.prev
-		Q.front = node.next
-		Q.size--
-		return node.value
+		return 0, ""
 	}
 
 	if node == Q.rear {
 		return Q.remove()
 	}
 
+	if node == Q.front {
+		node.next.prev = node.prev
+		Q.front = node.next
+		Q.size--
+		return node.key, node.value
+	}
+
 	value := node.value
+	key := node.key
 
 	node.next.prev = node.prev
 	node.prev.next = node.next
 
 	Q.size--
-	fmt.Printf("Inside remove, Size: %v\n", Q.size)
-	return value
+	// fmt.Printf("Inside remove, Size: %v\n", Q.size)
+	return key, value
 }
 
 func (Q *Queue) display() {

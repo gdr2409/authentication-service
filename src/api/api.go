@@ -35,6 +35,7 @@ func (r *Routes) Register() *http.ServeMux {
 	sm.Handle("/ping", http.HandlerFunc(hello.SayHello))
 	sm.Handle("/signUp", rootHandler(user.SignUp))
 	sm.Handle("/login", rootHandler(user.Login))
-
+	sm.Handle("/logout", rootHandler(user.Logout))
+	sm.Handle("/authenticate", rootHandler(user.Authenticate))
 	return sm
 }

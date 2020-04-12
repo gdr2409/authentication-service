@@ -23,6 +23,10 @@ type loginInput struct {
 	Password string `json: "password"`
 }
 
+type logoutInput struct {
+	Email string `json: "email"`
+}
+
 type signUpResponse struct {
 	ID        uint      `json: "id, omitempty"`
 	Message   string    `json: "message"`
@@ -30,8 +34,13 @@ type signUpResponse struct {
 }
 
 type loginResponse struct {
-	Message string `json: "message"`
+	ID      uint   `json: "id, omitempty"`
 	Token   string `json: "token, omitempty"`
+	Message string `json: "message"`
+}
+
+type logoutResponse struct {
+	Message string `json: "message"`
 }
 
 var (
@@ -137,6 +146,55 @@ func Login(w http.ResponseWriter, r *http.Request) *Error.Exception {
 	resp := loginResponse{
 		Message: "Logged in successfully",
 		Token:   authToken,
+		ID:      existingUser.Model.ID,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+	return nil
+}
+
+// Logout and generates auth token
+func Logout(w http.ResponseWriter, r *http.Request) *Error.Exception {
+	input := logoutInput{}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		return &Error.Exception{
+			Code:    400,
+			Message: "Invalid JSON schema",
+			Reason:  "INVALID_JSON_SCHEMA",
+		}
+	}
+
+	existingUsers := []Person{}
+	userRepository.Where("email = ?", input.Email).First(&existingUsers)
+
+	if len(existingUsers) == 0 {
+		return &Error.Exception{
+			Code:    400,
+			Message: "Invalid username",
+			Reason:  "INVALID_USERNAME",
+		}
+	}
+
+	existingUser := existingUsers[0]
+
+	authModule := authentication.AuthModule{}
+
+	_, catch := authModule.Delete(existingUser.Model.ID, "user")
+
+	if catch != nil {
+		return &Error.Exception{
+			Code:    400,
+			Message: "Error while token deletion",
+			Reason:  "ERROR_TOKEN_DELETION",
+		}
+	}
+
+	resp := logoutResponse{
+		Message: "Logged out successfully",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
